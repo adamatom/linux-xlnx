@@ -47,6 +47,23 @@
 #include <uapi/linux/nvme_ioctl.h>
 #include "nvme.h"
 
+static const char * pretty_print_opcode( int opcode ) {
+    switch( opcode ) {
+        case nvme_cmd_flush: return "nvme flush";
+        case nvme_cmd_write: return "nvme write";
+        case nvme_cmd_read: return "nvm read";
+        case nvme_cmd_write_uncor: return "nvme write uncorrectable";
+        case nvme_cmd_compare: return "nvme compare";
+        case nvme_cmd_write_zeroes: return "nvme write zeros";
+        case nvme_cmd_dsm: return "nvme dsm";
+        case nvme_cmd_resv_register: return "nvme rsev register";
+        case nvme_cmd_resv_report: return "nvme resv report";
+        case nvme_cmd_resv_acquire: return "nvme resv acquire";
+        case nvme_cmd_resv_release: return "nvme resv release";
+        default: "nvme unknown opcode";
+    }
+}
+
 #define NVME_MINORS		(1U << MINORBITS)
 #define NVME_Q_DEPTH		1024
 #define NVME_AQ_DEPTH		256
@@ -393,6 +410,7 @@ static void __nvme_submit_cmd(struct nvme_queue *nvmeq,
 						struct nvme_command *cmd)
 {
 	u16 tail = nvmeq->sq_tail;
+    printk(KERN_ERR "__nvme_submit_cmd: opcode = %s", pretty_print_opcode(cmd.nvme_command_common->opcode);
 
 	if (nvmeq->sq_cmds_io)
 		memcpy_toio(&nvmeq->sq_cmds_io[tail], cmd, sizeof(*cmd));
@@ -409,6 +427,7 @@ static void nvme_submit_cmd(struct nvme_queue *nvmeq, struct nvme_command *cmd)
 {
 	unsigned long flags;
 	spin_lock_irqsave(&nvmeq->q_lock, flags);
+    printk( KERN_ERR "%s %d\n" __PRETTY_FUNCTION__, __LINE__);
 	__nvme_submit_cmd(nvmeq, cmd);
 	spin_unlock_irqrestore(&nvmeq->q_lock, flags);
 }
@@ -739,6 +758,7 @@ static void nvme_submit_priv(struct nvme_queue *nvmeq, struct request *req,
 		cmnd.rw.prp2 = cpu_to_le64(iod->first_dma);
 	}
 
+    printk( KERN_ERR "%s %d\n" __PRETTY_FUNCTION__, __LINE__);
 	__nvme_submit_cmd(nvmeq, &cmnd);
 }
 
@@ -766,6 +786,7 @@ static void nvme_submit_discard(struct nvme_queue *nvmeq, struct nvme_ns *ns,
 	cmnd.dsm.nr = 0;
 	cmnd.dsm.attributes = cpu_to_le32(NVME_DSMGMT_AD);
 
+    printk( KERN_ERR "%s %d\n" __PRETTY_FUNCTION__, __LINE__);
 	__nvme_submit_cmd(nvmeq, &cmnd);
 }
 
@@ -779,6 +800,7 @@ static void nvme_submit_flush(struct nvme_queue *nvmeq, struct nvme_ns *ns,
 	cmnd.common.command_id = cmdid;
 	cmnd.common.nsid = cpu_to_le32(ns->ns_id);
 
+    printk( KERN_ERR "%s %d\n" __PRETTY_FUNCTION__, __LINE__);
 	__nvme_submit_cmd(nvmeq, &cmnd);
 }
 
@@ -830,6 +852,7 @@ static int nvme_submit_iod(struct nvme_queue *nvmeq, struct nvme_iod *iod,
 	cmnd.rw.control = cpu_to_le16(control);
 	cmnd.rw.dsmgmt = cpu_to_le32(dsmgmt);
 
+    printk( KERN_ERR "%s %d\n" __PRETTY_FUNCTION__, __LINE__);
 	__nvme_submit_cmd(nvmeq, &cmnd);
 
 	return 0;
@@ -1041,6 +1064,7 @@ int __nvme_submit_sync_cmd(struct request_queue *q, struct nvme_command *cmd,
 	struct request *req;
 	int ret;
 
+    printk( KERN_ERR "%s %d\n" __PRETTY_FUNCTION__, __LINE__);
 	req = blk_mq_alloc_request(q, write, GFP_KERNEL, false);
 	if (IS_ERR(req))
 		return PTR_ERR(req);
@@ -1093,6 +1117,8 @@ static int nvme_submit_async_admin_req(struct nvme_dev *dev)
 	struct nvme_command c;
 	struct nvme_cmd_info *cmd_info;
 	struct request *req;
+
+    printk( KERN_ERR "%s %d\n" __PRETTY_FUNCTION__, __LINE__);
 
 	req = blk_mq_alloc_request(dev->admin_q, WRITE, GFP_ATOMIC, true);
 	if (IS_ERR(req))
