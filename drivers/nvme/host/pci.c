@@ -410,7 +410,7 @@ static void __nvme_submit_cmd(struct nvme_queue *nvmeq,
 						struct nvme_command *cmd)
 {
 	u16 tail = nvmeq->sq_tail;
-    printk(KERN_ERR "__nvme_submit_cmd: opcode = %s", pretty_print_opcode(cmd.nvme_command_common->opcode));
+    printk(KERN_ERR "__nvme_submit_cmd: opcode = %s", pretty_print_opcode(cmd->common.opcode));
 
 	if (nvmeq->sq_cmds_io)
 		memcpy_toio(&nvmeq->sq_cmds_io[tail], cmd, sizeof(*cmd));
