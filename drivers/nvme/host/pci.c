@@ -3161,70 +3161,88 @@ static void nvme_probe_work(struct work_struct *work)
 	struct nvme_dev *dev = container_of(work, struct nvme_dev, probe_work);
 	bool start_thread = false;
 	int result;
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 
 	result = nvme_dev_map(dev);
 	if (result)
 		goto out;
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 
 	result = nvme_configure_admin_queue(dev);
 	if (result)
 		goto unmap;
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 
 	spin_lock(&dev_list_lock);
 	if (list_empty(&dev_list) && IS_ERR_OR_NULL(nvme_thread)) {
 		start_thread = true;
 		nvme_thread = NULL;
 	}
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 	list_add(&dev->node, &dev_list);
 	spin_unlock(&dev_list_lock);
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 
 	if (start_thread) {
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 		nvme_thread = kthread_run(nvme_kthread, NULL, "nvme");
 		wake_up_all(&nvme_kthread_wait);
 	} else
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 		wait_event_killable(nvme_kthread_wait, nvme_thread);
 
 	if (IS_ERR_OR_NULL(nvme_thread)) {
 		result = nvme_thread ? PTR_ERR(nvme_thread) : -EINTR;
 		goto disable;
 	}
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 
 	nvme_init_queue(dev->queues[0], 0);
 	result = nvme_alloc_admin_tags(dev);
 	if (result)
 		goto disable;
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 
 	result = nvme_setup_io_queues(dev);
 	if (result)
 		goto free_tags;
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 
 	dev->event_limit = 1;
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 
 	/*
 	 * Keep the controller around but remove all namespaces if we don't have
 	 * any working I/O queue.
 	 */
 	if (dev->online_queues < 2) {
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 		dev_warn(dev->dev, "IO queues not created\n");
 		nvme_dev_remove(dev);
 	} else {
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 		nvme_unfreeze_queues(dev);
 		nvme_dev_add(dev);
 	}
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 
 	return;
 
  free_tags:
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 	nvme_dev_remove_admin(dev);
 	blk_put_queue(dev->admin_q);
 	dev->admin_q = NULL;
 	dev->queues[0]->tags = NULL;
  disable:
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 	nvme_disable_queue(dev, 0);
 	nvme_dev_list_remove(dev);
  unmap:
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 	nvme_dev_unmap(dev);
  out:
+    printk( KERN_ERR "%s %d\n" , __PRETTY_FUNCTION__, __LINE__);
 	if (!work_busy(&dev->reset_work))
 		nvme_dead_ctrl(dev);
 }
